@@ -26,7 +26,9 @@ Vue.component('card-form', {
             let newCard = {
                 id: Date.now(),
                 title: this.title,
-                items: filledItems
+                items: filledItems,
+                column: 1,
+                doneAt: null
             }
             eventBus.$emit('card-created', newCard)
             this.title = ''
@@ -90,37 +92,90 @@ Vue.component('card-list', {
             this.saveCards()
         },
 
+        getPercentage(card) {
+            const completedCount = card.items.filter(item => item.checked).length
+            return Math.round((completedCount / card.items.length) * 100)
+        },
+
+        updateCardPosition(card) {
+            const percentage = this.getPercentage(card)
+            const oldColumn = card.column
+
+            if (percentage > 50 && card.column === 1) {
+                card.column = 2
+            } else if (percentage === 100 && card.column === 2) {
+                card.column = 3
+                card.doneAt = new Date().toLocaleString()
+            }
+
+            if (oldColumn !== card.column ) {
+                this.saveCards()
+            }
+
+        },
+
         updateCheckbox(cardId, itemIndex) {
             const card = this.cards.find(card => card.id === cardId)
             if(card) {
                 card.items[itemIndex].checked = !card.items[itemIndex].checked
+                this.updateCardPosition(card)  
                 this.saveCards()
             }
 
+        },
+
+        getColumnCards(columnNumber) {
+            return this.cards.filter(card => card.column === columnNumber)
         }
 
     },
 
     template: `
-        <div class="card-list">
-            <h3>All cards</h3>
+    <div class="card-list">
+        <h3 class="title">All cards</h3>
             <div v-if="cards.length === 0">
-                No cards yet!
+                 No cards yet!
             </div>
             <div v-else>
-                <div class="card-list-boxes">
-                    <div v-for="card in cards" :key="card.id" class="card">
-                        <h3>{{ card.title }}</h3>
-                        <div v-for="(item, index) in card.items" :key="index" class="item-list-string">
-                            <input type="checkbox" :checked="item.checked" @change="updateCheckbox(card.id, index)">
-                            <p>{{ item.name }}</p>
+                <div class="columns-container">
+                    
+                    <div class="column column1">
+                    
+                        <div v-for="card in getColumnCards(1)" :key="card.id" class="card">
+                            <h3>{{ card.title }}</h3>
+                            <div v-for="(item, index) in card.items" :key="index" class="item-list-string">
+                                <input type="checkbox" :checked="item.checked" @change="updateCheckbox(card.id, index)">
+                                <p>{{ item.name }}</p>
+                            </div>
+                            <button class="delete-card" @click="deleteCard(card.id)">Delete</button>
                         </div>
-                        <button class="delete-card" @click="deleteCard(card.id)">x</button>
                     </div>
-                </div>
-            </div>
+                    
+                    <div class="column column2">
+                        <div v-for="card in getColumnCards(2)" :key="card.id" class="card">
+                            <h3>{{ card.title }}</h3>
+                            <div v-for="(item, index) in card.items" :key="index" class="item-list-string">
+                                <input type="checkbox" :checked="item.checked" @change="updateCheckbox(card.id, index)">
+                                <p>{{ item.name }}</p>
+                            </div>
+                            <button class="delete-card" @click="deleteCard(card.id)">Delete</button>
+                        </div>
+                    </div>
+                    
+                    <div class="column column3">
+                        <div v-for="card in getColumnCards(3)" :key="card.id" class="card">
+                            <h3>{{ card.title }}</h3>
+                            <div v-for="(item, index) in card.items" :key="index" class="item-list-string">
+                                <input type="checkbox" :checked="item.checked" @change="updateCheckbox(card.id, index)">
+                                <p>{{ item.name }}</p>
+                            </div>
+                            <button class="delete-card" @click="deleteCard(card.id)">Delete</button>
+                        </div>
+                    </div> 
+                </div>  
         </div>
-    `,
+    </div>
+    `
 })
 
 let app = new Vue({
