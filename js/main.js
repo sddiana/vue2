@@ -18,7 +18,7 @@ Vue.component('card-form', {
                 return
             }
             const filledItems = this.items.filter(item => item).map(item => ({name: item, checked: false}))
-            
+
             if(filledItems.length < 3) {
                 return this.errorMessage = 'You need at least 3 points!'
             }
@@ -65,9 +65,26 @@ Vue.component('card-list', {
     },
 
     created() {
+        this.loadCards()
+        
         eventBus.$on('card-created', (newCard) => {
             this.cards.push(newCard)
+            this.saveCards()
         })
+    },
+
+    methods: {
+
+        saveCards() {
+            localStorage.setItem('cards', JSON.stringify(this.cards))
+        },
+
+        loadCards() {
+            const savedCards = localStorage.getItem('cards')
+            this.cards = JSON.parse(savedCards)
+
+        }
+
     },
 
     template: `
