@@ -83,6 +83,20 @@ Vue.component('card-list', {
             const savedCards = localStorage.getItem('cards')
             this.cards = JSON.parse(savedCards)
 
+        },
+
+        deleteCard(cardId) {
+            this.cards = this.cards.filter(card => card.id !== cardId)
+            this.saveCards()
+        },
+
+        updateCheckbox(cardId, itemIndex) {
+            const card = this.cards.find(card => card.id === cardId)
+            if(card) {
+                card.items[itemIndex].checked = !card.items[itemIndex].checked
+                this.saveCards()
+            }
+
         }
 
     },
@@ -98,9 +112,10 @@ Vue.component('card-list', {
                     <div v-for="card in cards" :key="card.id" class="card">
                         <h3>{{ card.title }}</h3>
                         <div v-for="(item, index) in card.items" :key="index" class="item-list-string">
-                            <input type="checkbox" v-model="item.checked">
+                            <input type="checkbox" :checked="item.checked" @change="updateCheckbox(card.id, index)">
                             <p>{{ item.name }}</p>
                         </div>
+                        <button class="delete-card" @click="deleteCard(card.id)">x</button>
                     </div>
                 </div>
             </div>
