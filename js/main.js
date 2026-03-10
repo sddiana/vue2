@@ -62,7 +62,9 @@ Vue.component('card-form', {
 Vue.component('card-list', {
     data() {
         return {
-            cards: []
+            cards: [],
+            maxCards1: 3,
+            maxCards2: 5
         }
     },
 
@@ -70,6 +72,11 @@ Vue.component('card-list', {
         this.loadCards()
         
         eventBus.$on('card-created', (newCard) => {
+
+            if (this.getColumnCards(1).length > this.maxCards1) {
+                alert('Cannot create a new card, column 1 is full to the maximum!')
+                return
+            }
             this.cards.push(newCard)
             this.saveCards()
         })
@@ -120,13 +127,35 @@ Vue.component('card-list', {
 
         },
 
+        isColumn1Locked () {
+            const column2Cards = this.getColumnCards(2)
+            if (column2Cards.length < 5) {
+                return false
+            }
+
+            const hasCompleted = column2Cards.some(card => this.getPercentage(card) === 100)
+            return !hasCompleted
+        },
+
         updateCheckbox(cardId, itemIndex) {
             const card = this.cards.find(card => card.id === cardId)
-            if(card) {
-                card.items[itemIndex].checked = !card.items[itemIndex].checked
-                this.updateCardPosition(card)  
-                this.saveCards()
+            if (!card) {
+                return
             }
+
+            if(card.column === 1 && this.isColumn1Locked()) {
+                alert('Column 1 is locked! Complete a task in column 2 first.')
+                return
+            } 
+
+            card.items[itemIndex].checked = !card.items[itemIndex].checked
+
+            this.updateCardPosition(card)
+
+            this.updateCardPosition(card)  
+            this.saveCards()
+
+
 
         },
 
