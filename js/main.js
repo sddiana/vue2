@@ -28,7 +28,7 @@ Vue.component('card-form', {
                 title: this.title,
                 items: filledItems,
                 column: 1,
-                doneAt: null
+                completedAt: null
             }
             eventBus.$emit('card-created', newCard)
             this.title = ''
@@ -83,7 +83,13 @@ Vue.component('card-list', {
 
         loadCards() {
             const savedCards = localStorage.getItem('cards')
-            this.cards = JSON.parse(savedCards)
+            if (savedCards) {
+                try {
+                    this.cards = JSON.parse(savedCards)
+                } catch {
+                    this.cards = []
+                }
+            }
 
         },
 
@@ -105,7 +111,7 @@ Vue.component('card-list', {
                 card.column = 2
             } else if (percentage === 100 && card.column === 2) {
                 card.column = 3
-                card.doneAt = new Date().toLocaleString()
+                card.completedAt = new Date().toLocaleString()
             }
 
             if (oldColumn !== card.column ) {
@@ -147,7 +153,7 @@ Vue.component('card-list', {
                                 <input type="checkbox" :checked="item.checked" @change="updateCheckbox(card.id, index)">
                                 <p>{{ item.name }}</p>
                             </div>
-                            <button class="delete-card" @click="deleteCard(card.id)">Delete</button>
+                            <button class="delete-button" @click="deleteCard(card.id)">Delete</button>
                         </div>
                     </div>
                     
@@ -158,7 +164,7 @@ Vue.component('card-list', {
                                 <input type="checkbox" :checked="item.checked" @change="updateCheckbox(card.id, index)">
                                 <p>{{ item.name }}</p>
                             </div>
-                            <button class="delete-card" @click="deleteCard(card.id)">Delete</button>
+                            <button class="delete-button" @click="deleteCard(card.id)">Delete</button>
                         </div>
                     </div>
                     
@@ -166,10 +172,13 @@ Vue.component('card-list', {
                         <div v-for="card in getColumnCards(3)" :key="card.id" class="card">
                             <h3>{{ card.title }}</h3>
                             <div v-for="(item, index) in card.items" :key="index" class="item-list-string">
-                                <input type="checkbox" :checked="item.checked" @change="updateCheckbox(card.id, index)">
+                                <input type="checkbox" :checked="item.checked" disabled>
                                 <p>{{ item.name }}</p>
                             </div>
-                            <button class="delete-card" @click="deleteCard(card.id)">Delete</button>
+                            <div class="completed-date" v-if="card.completedAt">
+                                Completed: {{ card.completedAt }}
+                            </div>
+                            <button class="delete-button" @click="deleteCard(card.id)">Delete</button>
                         </div>
                     </div> 
                 </div>  
