@@ -38,23 +38,71 @@ Vue.component('card-form', {
     },
     template: `
     <form class="card-form" @submit.prevent="onSubmit">
-        <h3>Make a card</h3>
-            <p class="form-group">
-                <label for="title">Title:</label>
-                <input type="text" id="title" v-model="title" placeholder="title">
-            </p>
-            <p class="form-group">
-                 <div v-for="(item, index) in items" :key="index">
-                    <span>{{ index + 1 }}.</span>
-                    <input type="text" v-model="items[index]" class="item-form-text">
-                </div>
-                
-            </p>
-            <p v-if="errorMessage" id="error-message">{{ errorMessage }}</p>
-            <p>
-                <input type="submit" value="Submit" id="submit"> 
-            </p>
+    <h3>Make a card</h3>
+        <p class="form-group">
+            <label for="title">Title:</label>
+            <input type="text" id="title" v-model="title" placeholder="title">
+        </p>
+        <p class="form-group">
+                <div v-for="(item, index) in items" :key="index">
+                <span>{{ index + 1 }}.</span>
+                <input type="text" v-model="items[index]" class="item-form-text">
+            </div>
+            
+        </p>
+        <p v-if="errorMessage" id="error-message">{{ errorMessage }}</p>
+        <p>
+            <input type="submit" value="Submit" id="submit"> 
+        </p>
     </form>
+    `
+})
+
+Vue.component('column', {
+
+    props: {
+        cards: {
+            type: Array,
+            required: true
+        },
+        columnNumber: {
+            type: Number,
+            required: true
+        },
+        isColumn3: {
+            type: Boolean,
+            default: false
+        }
+    },
+
+    methods: {
+        onUpdateCheckbox(cardId, itemIndex) {
+            this.$emit('update-checkbox', { cardId, itemIndex })
+        },
+        
+        onDeleteCard(cardId) {
+            this.$emit('delete-card', cardId)
+        },
+        
+        isColumn1Locked() {
+            this.$emit('check-column1-locked')
+        }
+    },
+
+    template: `
+        <div class="column ">
+            <div v-for="card in cards" :key="card.id" class="card">
+                <h3>{{ card.title }}</h3>
+                <div v-for="(item, index) in card.items" :key="index" class="item-list-string">
+                    <input type="checkbox" :checked="item.checked" @change="onUpdateCheckbox(card.id, index)">
+                    <p>{{ item.name }}</p>
+                </div>
+                <div class="completed-date" v-if="card.completedAt && isColumn3">
+                    Completed: {{ card.completedAt }}
+                </div>
+                <button class="delete-button" @click="onDeleteCard(card.id)">Delete</button>
+            </div>
+        </div>
     `
 })
 
@@ -73,7 +121,7 @@ Vue.component('card-list', {
         
         eventBus.$on('card-created', (newCard) => {
 
-            if (this.getColumnCards(1).length > this.maxCards1) {
+            if (this.getColumnCards(1).length >= this.maxCards1) {
                 alert('Cannot create a new card, column 1 is full to the maximum!')
                 return
             }
@@ -155,12 +203,18 @@ Vue.component('card-list', {
             this.updateCardPosition(card)  
             this.saveCards()
 
-
-
         },
 
         getColumnCards(columnNumber) {
             return this.cards.filter(card => card.column === columnNumber)
+        },
+
+        handleUpdateCheckbox(data) {
+            this.updateCheckbox(data.cardId, data.itemIndex)
+        },
+
+        handleDeleteCard(cardId) {
+            this.deleteCard(cardId)
         }
 
     },
@@ -173,44 +227,28 @@ Vue.component('card-list', {
             </div>
             <div v-else>
                 <div class="columns-container">
-                    
-                    <div class="column column1">
-                    
-                        <div v-for="card in getColumnCards(1)" :key="card.id" class="card">
-                            <h3>{{ card.title }}</h3>
-                            <div v-for="(item, index) in card.items" :key="index" class="item-list-string">
-                                <input type="checkbox" :checked="item.checked" @change="updateCheckbox(card.id, index)">
-                                <p>{{ item.name }}</p>
-                            </div>
-                            <button class="delete-button" @click="deleteCard(card.id)">Delete</button>
-                        </div>
-                    </div>
-                    
-                    <div class="column column2">
-                        <div v-for="card in getColumnCards(2)" :key="card.id" class="card">
-                            <h3>{{ card.title }}</h3>
-                            <div v-for="(item, index) in card.items" :key="index" class="item-list-string">
-                                <input type="checkbox" :checked="item.checked" @change="updateCheckbox(card.id, index)">
-                                <p>{{ item.name }}</p>
-                            </div>
-                            <button class="delete-button" @click="deleteCard(card.id)">Delete</button>
-                        </div>
-                    </div>
-                    
-                    <div class="column column3">
-                        <div v-for="card in getColumnCards(3)" :key="card.id" class="card">
-                            <h3>{{ card.title }}</h3>
-                            <div v-for="(item, index) in card.items" :key="index" class="item-list-string">
-                                <input type="checkbox" :checked="item.checked" disabled>
-                                <p>{{ item.name }}</p>
-                            </div>
-                            <div class="completed-date" v-if="card.completedAt">
-                                Completed: {{ card.completedAt }}
-                            </div>
-                            <button class="delete-button" @click="deleteCard(card.id)">Delete</button>
-                        </div>
-                    </div> 
+
+                <column
+                :cards="getColumnCards(1)"
+                :column-number="1"
+                @update-checkbox="handleUpdateCheckbox"
+                @delete-card="handleDeleteCard"
+                ></column>
+                <column
+                :cards="getColumnCards(2)"
+                :column-number="2"
+                @update-checkbox="handleUpdateCheckbox"
+                @delete-card="handleDeleteCard"
+                ></column>
+                <column
+                :cards="getColumnCards(3)"
+                :column-number="3"
+                @update-checkbox="handleUpdateCheckbox"
+                @delete-card="handleDeleteCard"
+                >
+                
                 </div>  
+
         </div>
     </div>
     `
