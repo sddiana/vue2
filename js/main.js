@@ -72,7 +72,11 @@ Vue.component('column', {
         isColumn3: {
             type: Boolean,
             default: false
-        }
+        },
+        column1Locked: {
+        type: Boolean,
+        default: false
+    }
     },
 
     methods: {
@@ -86,7 +90,13 @@ Vue.component('column', {
         
         isColumn1Locked() {
             this.$emit('check-column1-locked')
+        },
+        isCheckboxDisabled(card) {
+        if (this.columnNumber === 1) {
+            return this.column1Locked
         }
+        return false
+    }
     },
 
     template: `
@@ -94,10 +104,10 @@ Vue.component('column', {
             <div v-for="card in cards" :key="card.id" class="card">
                 <h3>{{ card.title }}</h3>
                 <div v-for="(item, index) in card.items" :key="index" class="item-list-string">
-                    <input type="checkbox" :checked="item.checked" @change="onUpdateCheckbox(card.id, index)">
+                    <input type="checkbox" :checked="item.checked" @change="onUpdateCheckbox(card.id, index)" :disabled="isCheckboxDisabled(card)">
                     <p>{{ item.name }}</p>
                 </div>
-                <div class="completed-date" v-if="card.completedAt && isColumn3">
+                <div class="completed-date" v-if="card.completedAt">
                     Completed: {{ card.completedAt }}
                 </div>
                 <button class="delete-button" @click="onDeleteCard(card.id)">Delete</button>
@@ -166,7 +176,7 @@ Vue.component('card-list', {
                 card.column = 2
             } else if (percentage === 100 && card.column === 2) {
                 card.column = 3
-                card.completedAt = new Date().toLocaleString()
+                card.completedAt = new Date().toDateString()
             }
 
             if (oldColumn !== card.column ) {
@@ -191,14 +201,8 @@ Vue.component('card-list', {
                 return
             }
 
-            if(card.column === 1 && this.isColumn1Locked()) {
-                alert('Column 1 is locked! Complete a task in column 2 first.')
-                return
-            } 
-
             card.items[itemIndex].checked = !card.items[itemIndex].checked
 
-            this.updateCardPosition(card)
 
             this.updateCardPosition(card)  
             this.saveCards()
@@ -231,6 +235,7 @@ Vue.component('card-list', {
                 <column
                 :cards="getColumnCards(1)"
                 :column-number="1"
+                :column1-locked="isColumn1Locked()"
                 @update-checkbox="handleUpdateCheckbox"
                 @delete-card="handleDeleteCard"
                 ></column>
@@ -242,7 +247,7 @@ Vue.component('card-list', {
                 ></column>
                 <column
                 :cards="getColumnCards(3)"
-                :column-number="3"
+                :column-number="3"    
                 @update-checkbox="handleUpdateCheckbox"
                 @delete-card="handleDeleteCard"
                 >
